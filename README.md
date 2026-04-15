@@ -1,0 +1,81 @@
+# hacker-news-digest
+
+Hacker News の前日人気記事を取得し、日本語ダイジェスト化するための小さなリポジトリです。
+
+このリポジトリには 2 つの中心要素があります。
+
+- `scripts/fetch_hn_stories.py`: Hacker News Algolia API から対象記事を取得する補助スクリプト
+- `SKILL.md`: 取得した記事を日本語の Markdown 表へ整形するための skill 定義
+
+## 何をするリポジトリか
+
+現在の挙動は、`SKILL.md` と `scripts/fetch_hn_stories.py` に合わせて次のように固定されています。
+
+- 対象期間: UTC 基準の「昨日」 (`00:00:00` から翌日の `00:00:00` 直前まで)
+- データソース: `https://hn.algolia.com/api/v1/search_by_date`
+- 条件: `tags=story` かつ `points>100`
+- 取得件数: 最大 100 件
+- 最終出力: 日本語の Markdown 表
+
+`google-generativeai` や `GEMINI_API_KEY` を前提にせず、モデル自身の翻訳・要約能力で完結する想定です。
+
+## 取得スクリプトの使い方
+
+このスクリプトは外部 Python パッケージ不要で動きます。
+
+```bash
+python3 scripts/fetch_hn_stories.py
+```
+
+実行すると、対象期間・クエリ URL・フィルタ条件・記事一覧を JSON で標準出力に出します。
+
+出力イメージ:
+
+```json
+{
+  "window_start_utc": "2026-04-14T00:00:00+00:00",
+  "window_end_utc": "2026-04-15T00:00:00+00:00",
+  "source": "https://hn.algolia.com/api/v1/search_by_date",
+  "stories": [
+    {
+      "id": "47772048",
+      "title": "Fuck the cloud (2009)",
+      "url": "https://ascii.textfiles.com/archives/1717"
+    }
+  ]
+}
+```
+
+## skill の役割
+
+`SKILL.md` は、取得済みの記事一覧をもとに日本語ダイジェストを作るための手順と出力形式を定義しています。
+
+- 原題はそのまま保持する
+- 日本語タイトルを自然な表現で付ける
+- 各記事に 1 文の日本語要約を付ける
+- 最終結果を Markdown 表として出力する
+
+表のヘッダーは次の形式です。
+
+```markdown
+| タイトル (原文) | タイトル (日本語訳) | 概要 |
+| :--- | :--- | :--- |
+```
+
+各行は次の形になります。
+
+```markdown
+| [Original title](url) | 日本語訳 | 1 文の要約 |
+```
+
+## 典型的な使いどころ
+
+- 前日の Hacker News 人気記事をざっと日本語で追いたい
+- 英語タイトルだけでは把握しづらい記事を 1 行ずつ要約したい
+- 既存の Gemini 前提フローを、より軽い skill ベースの運用に置き換えたい
+
+## 補足
+
+- ストーリーの並び順は API の返却順をそのまま使います
+- URL がない記事は `#` を使います
+- `summary` は 1 文に収める前提です
