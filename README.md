@@ -1,3 +1,5 @@
+Skill moves to https://github.com/tsubasaogawa/skills
+
 # hacker-news-digest
 
 Hacker News の前日人気記事を取得し、日本語ダイジェスト化するための小さなリポジトリです。
